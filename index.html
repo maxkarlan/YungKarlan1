@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streams Flowing Downward with p5.js</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script>
+        let streams = [];
+        const numOfStreams = 1000;
+        let circleRadius;
+        let randomMovement = true;
+      let obstacles = [];
+      let pressCount = 0;
+const numOfObstacles = 20;  // Or any other number you like
+
+
+        function setup() {
+            let canvasSize = min(windowWidth, windowHeight);
+            createCanvas(canvasSize, canvasSize);
+
+            background(255);
+            circleRadius = width / 6;
+            for (let i = 0; i < numOfStreams; i++) {
+                let col = color(random(100, 255), 0, random(0,155)); // Start with a blue shade
+                streams.push(new Stream(col));
+            }
+          for (let i = 0; i < numOfObstacles; i++) {
+    obstacles.push(new Obstacle());
+}
+
+        }
+
+        function draw() {
+            background(0);
+
+                // Draw the frame
+    let frameSize = width * (1/20);
+    fill(255); // color for the frame
+    noStroke();
+    rect(frameSize * (3/4), frameSize * (3/4), frameSize/4, height - frameSize * (3/2));
+    rect(width - (frameSize), frameSize * (3/4), frameSize/4, height - frameSize * (3/2));
+    rect(frameSize * (3/4), frameSize * (3/4), width - frameSize * (3/2), frameSize/4);
+    rect(frameSize * (3/4), height - (frameSize), width - frameSize * (3/2), frameSize/4);
+
+            // Draw the circle in the center of the window
+            noFill();
+            noStroke();
+            ellipse(width / 2, height / 2, 2 * circleRadius);
+
+            for (let s of streams) {
+                s.update();
+                s.display();
+            }
+        }
+
+function mousePressed() {
+    pressCount++;
+
+    if (pressCount % 2 === 0) {
+        // Every other time starting from the second time
+        obstacles = [];  // Clear existing obstacles
+        for (let i = 0; i < numOfObstacles; i++) {
+            obstacles.push(new Obstacle());
+        }
+    }
+
+    randomMovement = !randomMovement;
+    for (let s of streams) {
+        s.changeMovement(randomMovement);
+    }
+  
+  return false; // This prevents any default behavior
+}
+
+
+
+ class Obstacle {
+    constructor() {
+        this.position = createVector(random(width), random(height));
+        this.radius = random(20, 160);
+        while (this.overlapsWithMainCircle()) {
+            this.position = createVector(random(width), random(height));
+        }
+    }
+
+    overlapsWithMainCircle() {
+        let distanceToCenter = dist(this.position.x, this.position.y, width / 2, height / 2);
+        return distanceToCenter < circleRadius + this.radius;  // Added "+ this.radius" to consider the entire obstacle
+    }
+
+    display() {
+        fill(150);
+        noStroke();
+        ellipse(this.position.x, this.position.y, this.radius * 2);
+    }
+}
+      
+        class Stream {
+            constructor(color) {
+                this.justBounced = false;
+                this.color = color;
+                this.points = [];
+                this.noiseOffset = random(1000);
+                this.currentAngle = random(TWO_PI);
+                this.initStream();
+                this.randomMovement = true;
+            }
+
+initStream() {
+    let startX, startY;
+    do {
+        startX = random(width);
+        startY = random(height);
+    } while (!this.isInsideCircle(createVector(startX, startY))); // changed this condition
+
+    this.points.push(createVector(startX, startY));
+}
+
+            update() {
+                let lastPoint = this.points[this.points.length - 1];
+
+    if (this.insideCircle) {
+        // Random movement inside the circle
+        let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
+        this.currentAngle += angleVariation;
+    } else if (this.randomMovement) {
+        // Scatter movement
+        let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
+        this.currentAngle += angleVariation;
+    } else {
+        // Magnetized movement towards the circle
+        this.currentAngle = this.angleToCircleBorder(lastPoint);
+    }
+
+    if (this.justBounced) {
+        // Disable noise influence for some frames after bouncing
+        // You can adjust the number of frames as needed
+        this.framesAfterBounce = (this.framesAfterBounce || 0) + 1;
+        if (this.framesAfterBounce > 5) {  // Example: 10 frames
+            this.justBounced = false;
+            this.framesAfterBounce = 0;
+        }
+    } else {
+        this.noiseOffset += 0.05;  // Update noise offset if not recently bounced
+    }
+              
+
+    let len = 5;
+    let newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+
+              
+              
+    if (this.isInsideCircle(newPoint) && !this.insideCircle && this.randomMovement) {
+        // If the stream is about to enter the circle and is not allowed to, bounce it away
+        let angleToCenter = this.angleToCircleBorder(newPoint);
+        this.currentAngle = 2 * angleToCenter - PI - this.currentAngle;
+        newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+        this.justBounced = true;
+    }
+
+    if (this.isInsideCircle(newPoint)) {
+        this.insideCircle = true;
+    } else {
+        this.insideCircle = false;
+    }
+              for (let obstacle of obstacles) {
+    let distance = dist(lastPoint.x, lastPoint.y, obstacle.position.x, obstacle.position.y);
+    if (distance < obstacle.radius) {
+        // Repulsion effect
+let angleToObstacle = atan2(obstacle.position.x - lastPoint.x, obstacle.position.y - lastPoint.y);
+let deviationAngle = this.currentAngle - angleToObstacle;
+
+if (abs(deviationAngle) < PI / 2) {
+    this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+} else {
+    this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+}
+
+        // Update newPoint after obstacle interaction
+        newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+
+    }
+}
+
+          
+                // Bounce off the canvas boundaries
+                if (newPoint.x <= width * (1/20) || newPoint.x >= width * (19/20)) {
+                    this.currentAngle = PI - this.currentAngle;
+                    this.justBounced = true;
+                }
+                if (newPoint.y <= height * (1/20) || newPoint.y >= height * (19/20)) {
+                    this.currentAngle = - this.currentAngle;
+                    this.justBounced = true;
+                }
+              
+                newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+
+                // Check again if new point is outside the boundary, and adjust if necessary
+                if (newPoint.x <= width * (1/20) || newPoint.x >= width * (19/20) || newPoint.y <= height * (1/20) || newPoint.y >= height * (19/20)) {
+                    newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+                }
+
+                this.points.push(newPoint);
+                if (this.justBounced) {
+
+                } else {
+                this.noiseOffset += 0.05;
+                }
+
+                if (this.points.length > 100) {
+                    this.points.shift();
+                }
+            }
+          
+            angleToCircleBorder(point) {
+                return atan2(height / 2 - point.y, width / 2 - point.x);
+            }
+          
+            changeMovement(randomMovement) {
+                this.randomMovement = randomMovement;
+                if (randomMovement) {
+                    this.insideCircle = false; // Ensure stream is set as outside the circle
+                }
+            }
+          
+            isInsideCircle(point) {
+                let distanceToCenter = dist(point.x, point.y, width / 2, height / 2);
+                return distanceToCenter < circleRadius;
+            }
+
+            display() {
+                noFill();
+                stroke(this.color);
+                strokeWeight(1);
+                beginShape();
+                for (let pt of this.points) {
+                    vertex(pt.x, pt.y);
+                }
+                endShape();
+            }
+        }
+    </script>
+</body>
+</html>
