@@ -23,7 +23,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 <script>
 let streams = [];
-const numOfStreams = 500;
 let circleRadius;
 let randomMovement = true;
 let obstacles = [];
@@ -36,8 +35,12 @@ function setup() {
     createCanvas(canvasSize, canvasSize);
     background(255);
     circleRadius = width / 6;
+    let densityStreams = [150, 450, 750];
+    let numOfStreams = random(densityStreams);
+    console.log("density:", numOfStreams);
     let colorGroupFunctions = [redGroup, blueGroup, greenGroup, whiteGroup, purpleGroup, peachGroup, cottonCandyGroup, morningStarGroup];
     let selectedFunction = random(colorGroupFunctions);
+    console.log("color:", selectedFunction);
     // console.log(selectedFunction, "color");
     for (let i = 0; i < numOfStreams; i++) {
         let col = selectedFunction();
