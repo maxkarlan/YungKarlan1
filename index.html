@@ -20,34 +20,47 @@
     </style>
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <script>
-        let streams = [];
-        const numOfStreams = 1000;
-        let circleRadius;
-        let randomMovement = true;
-      let obstacles = [];
-      let pressCount = 0;
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+<script>
+let streams = [];
+const numOfStreams = 500;
+let circleRadius;
+let randomMovement = true;
+let obstacles = [];
+let pressCount = 0;
 const numOfObstacles = 20;  // Or any other number you like
 
 
-        function setup() {
-            let canvasSize = min(windowWidth, windowHeight);
-            createCanvas(canvasSize, canvasSize);
-
-            background(255);
-            circleRadius = width / 6;
-            for (let i = 0; i < numOfStreams; i++) {
-                let col = color(random(100, 255), 0, random(0,155)); // Start with a blue shade
-                streams.push(new Stream(col));
-            }
-          for (let i = 0; i < numOfObstacles; i++) {
-    obstacles.push(new Obstacle());
+function setup() {
+    let canvasSize = min(windowWidth, windowHeight);
+    createCanvas(canvasSize, canvasSize);
+    background(255);
+    circleRadius = width / 6;
+    let colorGroupFunctions = [redGroup, blueGroup, greenGroup];
+    let selectedFunction = random(colorGroupFunctions);
+    // console.log(selectedFunction, "color");
+    for (let i = 0; i < numOfStreams; i++) {
+        let col = selectedFunction();
+        streams.push(new Stream(col));
+    }
+    for (let i = 0; i < numOfObstacles; i++) {
+        obstacles.push(new Obstacle());
+    }
 }
 
-        }
+function redGroup () {
+    return col = color(random(100, 255), 0, random(0,155));
+}
 
-        function draw() {
+function blueGroup () {
+    return col = color(0, random(0, 155), random(100, 255));
+}
+
+function greenGroup () {
+    return col = color(random(0, 155), random(100, 255), 0);
+}
+
+function draw() {
             background(0);
 
                 // Draw the frame
@@ -256,6 +269,6 @@ if (abs(deviationAngle) < PI / 2) {
                 endShape();
             }
         }
-    </script>
+</script>
 </body>
 </html>
