@@ -23,6 +23,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 <script>
 let streams = [];
+let circleRadiusOptions = [];
 let circleRadius;
 let randomMovement = true;
 let obstacles = [];
@@ -34,7 +35,9 @@ const numOfObstacles = 20;  // Or any other number you like
 function setup() {
     let canvasSize = min(windowWidth, windowHeight);
     createCanvas(canvasSize, canvasSize);
-    circleRadius = width / 6;
+    circleRadiusOptions = [3, 6, 12];
+    circleRadius = width / random(circleRadiusOptions);
+    console.log("radius:", circleRadius);
     let densityStreams = [150, 450, 750];
     let numOfStreams = random(densityStreams);
     console.log("density:", numOfStreams);
