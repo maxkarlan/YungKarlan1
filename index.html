@@ -25,6 +25,7 @@
 let streams = [];
 let circleRadiusOptions = [];
 let circleRadius;
+let shapeType;
 let randomMovement = true;
 let obstacles = [];
 let pressCount = 0;
@@ -37,6 +38,8 @@ function setup() {
     createCanvas(canvasSize, canvasSize);
     circleRadiusOptions = [3, 6, 12];
     circleRadius = width / random(circleRadiusOptions);
+
+    shapeType = random() < 0.5 ? 'circle' : 'square';
     console.log("radius:", circleRadius);
     let densityStreams = [150, 450, 750];
     let numOfStreams = random(densityStreams);
@@ -181,7 +184,7 @@ initStream() {
     do {
         startX = random(width);
         startY = random(height);
-    } while (!this.isInsideCircle(createVector(startX, startY))); // changed this condition
+    } while (!this.isInsideShape(createVector(startX, startY))); // changed this condition
 
     this.points.push(createVector(startX, startY));
 }
@@ -220,7 +223,7 @@ initStream() {
 
               
               
-    if (this.isInsideCircle(newPoint) && !this.insideCircle && this.randomMovement) {
+    if (this.isInsideShape(newPoint) && !this.insideCircle && this.randomMovement) {
         // If the stream is about to enter the circle and is not allowed to, bounce it away
         let angleToCenter = this.angleToCircleBorder(newPoint);
         this.currentAngle = 2 * angleToCenter - PI - this.currentAngle;
@@ -228,7 +231,7 @@ initStream() {
         this.justBounced = true;
     }
 
-    if (this.isInsideCircle(newPoint)) {
+    if (this.isInsideShape(newPoint)) {
         this.insideCircle = true;
     } else {
         this.insideCircle = false;
@@ -293,9 +296,13 @@ if (abs(deviationAngle) < PI / 2) {
                 }
             }
           
-            isInsideCircle(point) {
-                let distanceToCenter = dist(point.x, point.y, width / 2, height / 2);
-                return distanceToCenter < circleRadius;
+            isInsideShape(point) {
+                if (shapeType === 'circle') {
+                    return dist(point.x, point.y, width / 2, height / 2) < circleRadius;
+                } else {
+                    // Can rename variable later, but let's say that `circleRadius` is the side length of the square
+                    return point.x > width / 2 - circleRadius / 2 && point.x < width / 2 + circleRadius / 2 && point.y > height / 2 - circleRadius / 2 && point.y < height / 2 + circleRadius / 2;
+                }
             }
 
             display() {
