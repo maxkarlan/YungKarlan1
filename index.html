@@ -152,14 +152,32 @@ function mousePressed() {
     constructor() {
         this.position = createVector(random(width), random(height));
         this.radius = random(20, 160);
-        while (this.overlapsWithMainCircle()) {
+        while (this.overlapsWithMainShape()) {
             this.position = createVector(random(width), random(height));
         }
     }
 
-    overlapsWithMainCircle() {
-        let distanceToCenter = dist(this.position.x, this.position.y, width / 2, height / 2);
-        return distanceToCenter < circleRadius + this.radius;  // Added "+ this.radius" to consider the entire obstacle
+    overlapsWithMainShape() {
+        if (shapeType === 'circle') {
+            return dist(this.position.x, this.position.y, width / 2, height / 2) < (circleRadius + this.radius);
+        } else if (shapeType === 'square') {
+            // Can rename variable later, but let's say that `circleRadius` is the side length of the square
+            return this.position.x > width / 2 - (circleRadius + this.radius) / 2 && this.position.x < width / 2 + (circleRadius + this.radius) / 2 && this.position.y > height / 2 - (circleRadius + this.radius) / 2 && this.position.y < height / 2 + (circleRadius + this.radius) / 2;
+        } else {
+            // Can rename variable later, but `circleRadius` is the side length of the triangle
+            // See if point is within the triangle
+            let x1 = width / 2 - (circleRadius + this.radius) / 2;
+            let y1 = height / 2 + (circleRadius + this.radius) / 2;
+            let x2 = width / 2 + (circleRadius + this.radius) / 2;
+            let y2 = height / 2 + (circleRadius + this.radius) / 2;
+            let x3 = width / 2;
+            let y3 = height / 2 - (circleRadius + this.radius) / 2;
+            let denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+            let a = ((y2 - y3) * (this.position.x - x3) + (x3 - x2) * (this.position.y - y3)) / denominator;
+            let b = ((y3 - y1) * (this.position.x - x3) + (x1 - x3) * (this.position.y - y3)) / denominator;
+            let c = 1 - a - b;
+            return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
+        }
     }
 
     display() {
