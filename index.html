@@ -165,66 +165,73 @@ function mousePressed() {
             return this.position.x > (width / 2) - (circleRadius / 2) - this.radius && this.position.x < (width / 2) + (circleRadius / 2) + this.radius && this.position.y > (height / 2) - (circleRadius / 2) - this.radius && this.position.y < (height / 2) + (circleRadius / 2) + this.radius;
         } else {
             // Can rename variable later, but `circleRadius` is the side length of the triangle
-            // See if point is within the triangle
-            let x1 = width / 2 - (circleRadius + this.radius) / 2;
-            let y1 = height / 2 + (circleRadius + this.radius) / 2;
-            let x2 = width / 2 + (circleRadius + this.radius) / 2;
-            let y2 = height / 2 + (circleRadius + this.radius) / 2;
-            let x3 = width / 2;
-            let y3 = height / 2 - (circleRadius + this.radius) / 2;
-            let denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-            let a = ((y2 - y3) * (this.position.x - x3) + (x3 - x2) * (this.position.y - y3)) / denominator;
-            let b = ((y3 - y1) * (this.position.x - x3) + (x1 - x3) * (this.position.y - y3)) / denominator;
-            let c = 1 - a - b;
-            return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
+            // Define the vertices of the triangle
+            let x1 = width / 2, y1 = height / 2 - circleRadius / sqrt(3);
+            let x2 = width / 2 - circleRadius / 2, y2 = height / 2 + circleRadius / (2 * sqrt(3));
+            let x3 = width / 2 + circleRadius / 2, y3 = y2;
 
-                    // Check each edge of the triangle for intersection with the circle
-            if (edgeCircleIntersect(x1, y1, x2, y2, this.position.x, this.position.y, this.radius) ||
-                edgeCircleIntersect(x2, y2, x3, y3, this.position.x, this.position.y, this.radius) ||
-                edgeCircleIntersect(x3, y3, x1, y1, this.position.x, this.position.y, this.radius)) {
+            // Check if the circle's center is inside the triangle
+            if (pointInTriangle(this.position.x, this.position.y, x1, y1, x2, y2, x3, y3)) {
                 return true;
             }
+
+            // Check if any of the triangle's vertices are inside the circle
+            if (dist(this.position.x, this.position.y, x1, y1) < this.radius ||
+                dist(this.position.x, this.position.y, x2, y2) < this.radius ||
+                dist(this.position.x, this.position.y, x3, y3) < this.radius) {
+                return true;
+            }
+
+            // Check if the circle intersects with any of the triangle's edges
+            return circleLineIntersect(this.position.x, this.position.y, this.radius, x1, y1, x2, y2) ||
+                circleLineIntersect(this.position.x, this.position.y, this.radius, x2, y2, x3, y3) ||
+                circleLineIntersect(this.position.x, this.position.y, this.radius, x3, y3, x1, y1);
         }
-        function edgeCircleIntersect(x1, y1, x2, y2, cx, cy, r) {
-            // Calculate the coefficients of the line's equation (Ax + By + C = 0)
-            let A = y2 - y1;
-            let B = x1 - x2;
-            let C = x2 * y1 - x1 * y2;
 
-            // Calculate the distance from the circle's center to the line
-            let dist = abs(A * cx + B * cy + C) / sqrt(A * A + B * B);
+                // Function to check if a point is inside a triangle
+        function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+            let v0 = [cx - ax, cy - ay];
+            let v1 = [bx - ax, by - ay];
+            let v2 = [px - ax, py - ay];
 
-            // If the distance is greater than the radius, no intersection
-            if (dist > r) {
+            let dot00 = v0[0] * v0[0] + v0[1] * v0[1];
+            let dot01 = v0[0] * v1[0] + v0[1] * v1[1];
+            let dot02 = v0[0] * v2[0] + v0[1] * v2[1];
+            let dot11 = v1[0] * v1[0] + v1[1] * v1[1];
+            let dot12 = v1[0] * v2[0] + v1[1] * v2[1];
+
+            let invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+            let u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+            let v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+            return (u >= 0) && (v >= 0) && (u + v < 1);
+        }
+
+        // Function to check if a line segment intersects a circle
+        function circleLineIntersect(x0, y0, radius, x1, y1, x2, y2) {
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+            let a = dx * dx + dy * dy;
+            let b = 2 * (dx * (x1 - x0) + dy * (y1 - y0));
+            let c = x1 * x1 + y1 * y1;
+            c += x0 * x0 + y0 * y0;
+            c -= 2 * (x1 * x0 + y1 * y0);
+            c -= radius * radius;
+            let det = b * b - 4 * a * c;
+
+            if (a <= 0.0000001 || det < 0) {
+                // No real solutions.
                 return false;
-            }
-
-            // Check if the circle's center projection on the line falls within the line segment
-            let dot = (cx - x1) * (x2 - x1) + (cy - y1) * (y2 - y1);
-            let len_sq = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-            let param = -1;
-
-            if (len_sq != 0) { // in case of 0 length line
-                param = dot / len_sq;
-            }
-
-            let xx, yy;
-
-            if (param < 0) {
-                xx = x1;
-                yy = y1;
-            } else if (param > 1) {
-                xx = x2;
-                yy = y2;
+            } else if (det == 0) {
+                // One solution.
+                let t = -b / (2 * a);
+                return t >= 0 && t <= 1;
             } else {
-                xx = x1 + param * (x2 - x1);
-                yy = y1 + param * (y2 - y1);
+                // Two solutions.
+                let t1 = (-b + sqrt(det)) / (2 * a);
+                let t2 = (-b - sqrt(det)) / (2 * a);
+                return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
             }
-
-            // Check if the closest point is within the circle
-            let dx = xx - cx;
-            let dy = yy - cy;
-            return (dx * dx + dy * dy) <= r * r;
         }
     }
 
@@ -303,22 +310,24 @@ initStream() {
     } else {
         this.insideCircle = false;
     }
-              for (let obstacle of obstacles) {
-    let distance = dist(lastPoint.x, lastPoint.y, obstacle.position.x, obstacle.position.y);
-    if (distance < obstacle.radius) {
-        // Repulsion effect
-let angleToObstacle = atan2(obstacle.position.x - lastPoint.x, obstacle.position.y - lastPoint.y);
-let deviationAngle = this.currentAngle - angleToObstacle;
+if (!this.isInsideShape(newPoint)) {
+    for (let obstacle of obstacles) {
+        let distance = dist(lastPoint.x, lastPoint.y, obstacle.position.x, obstacle.position.y);
+        if (distance < obstacle.radius) {
+            // Repulsion effect
+            let angleToObstacle = atan2(obstacle.position.x - lastPoint.x, obstacle.position.y - lastPoint.y);
+            let deviationAngle = this.currentAngle - angleToObstacle;
 
-if (abs(deviationAngle) < PI / 2) {
-    this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
-} else {
-    this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
-}
+            if (abs(deviationAngle) < PI / 2) {
+                this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+            } else {
+                this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+            }
 
-        // Update newPoint after obstacle interaction
-        newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+            // Update newPoint after obstacle interaction
+            newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
 
+        }
     }
 }
 
