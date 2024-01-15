@@ -162,7 +162,7 @@ function mousePressed() {
             return dist(this.position.x, this.position.y, width / 2, height / 2) < (circleRadius + this.radius);
         } else if (shapeType === 'square') {
             // Can rename variable later, but let's say that `circleRadius` is the side length of the square
-            return this.position.x > width / 2 - (circleRadius + this.radius) / 2 && this.position.x < width / 2 + (circleRadius + this.radius) / 2 && this.position.y > height / 2 - (circleRadius + this.radius) / 2 && this.position.y < height / 2 + (circleRadius + this.radius) / 2;
+            return this.position.x > (width / 2) - (circleRadius / 2) - this.radius && this.position.x < (width / 2) + (circleRadius / 2) + this.radius && this.position.y > (height / 2) - (circleRadius / 2) - this.radius && this.position.y < (height / 2) + (circleRadius / 2) + this.radius;
         } else {
             // Can rename variable later, but `circleRadius` is the side length of the triangle
             // See if point is within the triangle
@@ -321,7 +321,7 @@ if (abs(deviationAngle) < PI / 2) {
                 } else if (shapeType === 'square') {
                     // Can rename variable later, but let's say that `circleRadius` is the side length of the square
                     return point.x > width / 2 - circleRadius / 2 && point.x < width / 2 + circleRadius / 2 && point.y > height / 2 - circleRadius / 2 && point.y < height / 2 + circleRadius / 2;
-                } else {
+                } else if (shapeType === 'triangle') {
                     // Can rename variable later, but `circleRadius` is the side length of the triangle
                     // See if point is within the triangle
                     let x1 = width / 2 - circleRadius / 2;
