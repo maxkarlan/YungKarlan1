@@ -177,6 +177,54 @@ function mousePressed() {
             let b = ((y3 - y1) * (this.position.x - x3) + (x1 - x3) * (this.position.y - y3)) / denominator;
             let c = 1 - a - b;
             return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
+
+                    // Check each edge of the triangle for intersection with the circle
+            if (edgeCircleIntersect(x1, y1, x2, y2, this.position.x, this.position.y, this.radius) ||
+                edgeCircleIntersect(x2, y2, x3, y3, this.position.x, this.position.y, this.radius) ||
+                edgeCircleIntersect(x3, y3, x1, y1, this.position.x, this.position.y, this.radius)) {
+                return true;
+            }
+        }
+        function edgeCircleIntersect(x1, y1, x2, y2, cx, cy, r) {
+            // Calculate the coefficients of the line's equation (Ax + By + C = 0)
+            let A = y2 - y1;
+            let B = x1 - x2;
+            let C = x2 * y1 - x1 * y2;
+
+            // Calculate the distance from the circle's center to the line
+            let dist = abs(A * cx + B * cy + C) / sqrt(A * A + B * B);
+
+            // If the distance is greater than the radius, no intersection
+            if (dist > r) {
+                return false;
+            }
+
+            // Check if the circle's center projection on the line falls within the line segment
+            let dot = (cx - x1) * (x2 - x1) + (cy - y1) * (y2 - y1);
+            let len_sq = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+            let param = -1;
+
+            if (len_sq != 0) { // in case of 0 length line
+                param = dot / len_sq;
+            }
+
+            let xx, yy;
+
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            } else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            } else {
+                xx = x1 + param * (x2 - x1);
+                yy = y1 + param * (y2 - y1);
+            }
+
+            // Check if the closest point is within the circle
+            let dx = xx - cx;
+            let dy = yy - cy;
+            return (dx * dx + dy * dy) <= r * r;
         }
     }
 
