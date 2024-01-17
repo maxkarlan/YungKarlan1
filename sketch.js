@@ -244,11 +244,11 @@ initStream() {
 
     if (this.insideCircle) {
         // Random movement inside the circle
-        let angleVariation = map(hl.perlinNoise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
+        let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
         this.currentAngle += angleVariation;
     } else if (this.randomMovement) {
         // Scatter movement
-        let angleVariation = map(hl.perlinNoise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
+        let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
         this.currentAngle += angleVariation;
     } else {
         // Magnetized movement towards the circle
