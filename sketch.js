@@ -1,75 +1,80 @@
 let streams = [];
 let circleRadiusOptions = [];
-let circleRadius;
-let shapeType;
+let mainShapes = [];
 let randomMovement = true;
 let obstacles = [];
 let pressCount = 0;
 let bgWhite;
 const numOfObstacles = 20;  // Or any other number you like
-
+const numOfMainShapes = 3;  // Adjust the number of main shapes you want
 
 function setup() {
     let canvasSize = min(windowWidth, windowHeight);
     createCanvas(canvasSize, canvasSize);
     circleRadiusOptions = [3, 6, 12];
-    circleRadius = width / hl.randomElement(circleRadiusOptions);
 
     let shapeTypeOptions = ['circle', 'square', 'triangle'];
-    shapeType = hl.randomElement(shapeTypeOptions);
-    console.log("radius:", circleRadius);
     let densityStreams = [150, 450, 750];
     let numOfStreams = hl.randomElement(densityStreams);
     console.log("density:", numOfStreams);
+
     let colorGroupFunctions = [redGroup, blueGroup, greenGroup, whiteGroup, purpleGroup, peachGroup, cottonCandyGroup, morningStarGroup];
     let selectedFunction = hl.randomElement(colorGroupFunctions);
     bgWhite = hl.randomBool(0.5);
     console.log("color:", selectedFunction);
-    // console.log(selectedFunction, "color");
+
+    for (let i = 0; i < numOfMainShapes; i++) {
+        let shapeType = hl.randomElement(shapeTypeOptions);
+        let circleRadius = width / hl.randomElement(circleRadiusOptions);
+        let position = createVector(hl.randomInt(width * .05, width * .95), hl.randomInt(height * .05, height * .95));
+        mainShapes.push({ type: shapeType, radius: circleRadius, position: position });
+    }
+
     for (let i = 0; i < numOfStreams; i++) {
         let col = selectedFunction();
         streams.push(new Stream(col));
     }
+
     for (let i = 0; i < numOfObstacles; i++) {
         obstacles.push(new Obstacle());
     }
 }
 
-function redGroup () {
-    return col = color(hl.randomInt(100, 255), 0, hl.randomInt(0,155));
+function redGroup() {
+    return color(hl.randomInt(100, 255), 0, hl.randomInt(0, 155));
 }
 
-function blueGroup () {
-    return col = color(0, hl.randomInt(0, 155), hl.randomInt(100, 255));
+function blueGroup() {
+    return color(0, hl.randomInt(0, 155), hl.randomInt(100, 255));
 }
 
-function greenGroup () {
-    return col = color(hl.randomInt(0, 155), hl.randomInt(100, 255), 0);
+function greenGroup() {
+    return color(hl.randomInt(0, 155), hl.randomInt(100, 255), 0);
 }
 
-function whiteGroup () {
+function whiteGroup() {
     colorMode(HSB);
-    return col = color(0, 0, hl.randomInt(35,100));
+    return color(0, 0, hl.randomInt(35, 100));
 }
 
 function purpleGroup() {
-    return col = color(220, hl.randomInt(0, 155), hl.randomInt(200, 255));
+    return color(220, hl.randomInt(0, 155), hl.randomInt(200, 255));
 }
 
 function peachGroup() {
-    return col = color(255, hl.randomInt(75, 155), hl.randomInt(0, 125));
+    return color(255, hl.randomInt(75, 155), hl.randomInt(0, 125));
 }
 
 function cottonCandyGroup() {
-    return col = color(hl.randomInt(150, 255), hl.randomInt(100, 200), 255);
+    return color(hl.randomInt(150, 255), hl.randomInt(100, 200), 255);
 }
 
 function morningStarGroup() {
     let mainColor = hl.randomBool(0.85);
     if (mainColor) {
-        return col = color(hl.randomInt(0, 255), 0, 0);
+        return color(hl.randomInt(0, 255), 0, 0);
     } else {
-        return col = color(255, hl.randomInt(215, 255), 255, 155);
+        return color(255, hl.randomInt(215, 255), 255, 155);
     }
 }
 
@@ -81,33 +86,44 @@ function draw() {
         background(0);
         fill(255);
     }
-            
 
-                // Draw the frame
-    let frameSize = width * (1/20);
+    // Draw the frame
+    let frameSize = width * 0.05;
 
     noStroke();
-    rect(frameSize * (3/4), frameSize * (3/4), frameSize/4, height - frameSize * (3/2));
-    rect(width - (frameSize), frameSize * (3/4), frameSize/4, height - frameSize * (3/2));
-    rect(frameSize * (3/4), frameSize * (3/4), width - frameSize * (3/2), frameSize/4);
-    rect(frameSize * (3/4), height - (frameSize), width - frameSize * (3/2), frameSize/4);
+    rectMode(CORNER);
+    rect(0, 0, frameSize, height); // left vertical frame
+    rect(width - frameSize, 0, width, height); // right vertical frame
+    rect(0, 0, width, frameSize); //top horitzontal frame
+    rect(0, height - frameSize, width, height); // bottom horizontal frame
 
-            // Draw the circle in the center of the window
-            noFill();
-            noStroke();
-            ellipse(width / 2, height / 2, 2 * circleRadius);
-
-            for (let s of streams) {
-                s.update();
-                s.display();
-            }
+    // Draw the main shapes
+    for (let shape of mainShapes) {
+        noFill();
+        stroke(125, 125, 125);
+        if (shape.type === 'circle') {
+            ellipse(shape.position.x, shape.position.y, 2 * shape.radius);
+        } else if (shape.type === 'square') {
+            rectMode(CENTER);
+            rect(shape.position.x, shape.position.y, shape.radius * 2, shape.radius * 2);
+        } else if (shape.type === 'triangle') {
+            let x1 = shape.position.x, y1 = shape.position.y - shape.radius / sqrt(3);
+            let x2 = shape.position.x - shape.radius / 2, y2 = shape.position.y + shape.radius / (2 * sqrt(3));
+            let x3 = shape.position.x + shape.radius / 2, y3 = y2;
+            triangle(x1, y1, x2, y2, x3, y3);
         }
+    }
+
+    for (let s of streams) {
+        s.update();
+        s.display();
+    }
+}
 
 function mousePressed() {
     pressCount++;
 
     if (pressCount % 2 === 0) {
-        // Every other time starting from the second time
         obstacles = [];  // Clear existing obstacles
         for (let i = 0; i < numOfObstacles; i++) {
             obstacles.push(new Obstacle());
@@ -118,13 +134,11 @@ function mousePressed() {
     for (let s of streams) {
         s.changeMovement(randomMovement);
     }
-  
-  return false; // This prevents any default behavior
+
+    return false; // This prevents any default behavior
 }
 
-
-
- class Obstacle {
+class Obstacle {
     constructor() {
         this.position = createVector(hl.randomInt(width), hl.randomInt(height));
         this.radius = hl.randomInt(20, 160);
@@ -134,37 +148,41 @@ function mousePressed() {
     }
 
     overlapsWithMainShape() {
-        if (shapeType === 'circle') {
-            return dist(this.position.x, this.position.y, width / 2, height / 2) < (circleRadius + this.radius);
-        } else if (shapeType === 'square') {
-            // Can rename variable later, but let's say that `circleRadius` is the side length of the square
-            return this.position.x > (width / 2) - (circleRadius / 2) - this.radius && this.position.x < (width / 2) + (circleRadius / 2) + this.radius && this.position.y > (height / 2) - (circleRadius / 2) - this.radius && this.position.y < (height / 2) + (circleRadius / 2) + this.radius;
-        } else {
-            // Can rename variable later, but `circleRadius` is the side length of the triangle
-            // Define the vertices of the triangle
-            let x1 = width / 2, y1 = height / 2 - circleRadius / sqrt(3);
-            let x2 = width / 2 - circleRadius / 2, y2 = height / 2 + circleRadius / (2 * sqrt(3));
-            let x3 = width / 2 + circleRadius / 2, y3 = y2;
+        for (let shape of mainShapes) {
+            if (shape.type === 'circle') {
+                if (dist(this.position.x, this.position.y, shape.position.x, shape.position.y) < (shape.radius + this.radius)) {
+                    return true;
+                }
+            } else if (shape.type === 'square') {
+                if (this.position.x > shape.position.x - (shape.radius / 2) - this.radius && this.position.x < shape.position.x + (shape.radius / 2) + this.radius &&
+                    this.position.y > shape.position.y - (shape.radius / 2) - this.radius && this.position.y < shape.position.y + (shape.radius / 2) + this.radius) {
+                    return true;
+                }
+            } else {
+                let x1 = shape.position.x, y1 = shape.position.y - shape.radius / sqrt(3);
+                let x2 = shape.position.x - shape.radius / 2, y2 = shape.position.y + shape.radius / (2 * sqrt(3));
+                let x3 = shape.position.x + shape.radius / 2, y3 = y2;
 
-            // Check if the circle's center is inside the triangle
-            if (pointInTriangle(this.position.x, this.position.y, x1, y1, x2, y2, x3, y3)) {
-                return true;
+                if (pointInTriangle(this.position.x, this.position.y, x1, y1, x2, y2, x3, y3)) {
+                    return true;
+                }
+
+                if (dist(this.position.x, this.position.y, x1, y1) < this.radius ||
+                    dist(this.position.x, this.position.y, x2, y2) < this.radius ||
+                    dist(this.position.x, this.position.y, x3, y3) < this.radius) {
+                    return true;
+                }
+
+                if (circleLineIntersect(this.position.x, this.position.y, this.radius, x1, y1, x2, y2) ||
+                    circleLineIntersect(this.position.x, this.position.y, this.radius, x2, y2, x3, y3) ||
+                    circleLineIntersect(this.position.x, this.position.y, this.radius, x3, y3, x1, y1)) {
+                    return true;
+                }
             }
-
-            // Check if any of the triangle's vertices are inside the circle
-            if (dist(this.position.x, this.position.y, x1, y1) < this.radius ||
-                dist(this.position.x, this.position.y, x2, y2) < this.radius ||
-                dist(this.position.x, this.position.y, x3, y3) < this.radius) {
-                return true;
-            }
-
-            // Check if the circle intersects with any of the triangle's edges
-            return circleLineIntersect(this.position.x, this.position.y, this.radius, x1, y1, x2, y2) ||
-                circleLineIntersect(this.position.x, this.position.y, this.radius, x2, y2, x3, y3) ||
-                circleLineIntersect(this.position.x, this.position.y, this.radius, x3, y3, x1, y1);
         }
 
-                // Function to check if a point is inside a triangle
+        return false;
+
         function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
             let v0 = [cx - ax, cy - ay];
             let v1 = [bx - ax, by - ay];
@@ -183,7 +201,6 @@ function mousePressed() {
             return (u >= 0) && (v >= 0) && (u + v < 1);
         }
 
-        // Function to check if a line segment intersects a circle
         function circleLineIntersect(x0, y0, radius, x1, y1, x2, y2) {
             let dx = x2 - x1;
             let dy = y2 - y1;
@@ -196,14 +213,11 @@ function mousePressed() {
             let det = b * b - 4 * a * c;
 
             if (a <= 0.0000001 || det < 0) {
-                // No real solutions.
                 return false;
-            } else if (det == 0) {
-                // One solution.
+            } else if (det === 0) {
                 let t = -b / (2 * a);
                 return t >= 0 && t <= 1;
             } else {
-                // Two solutions.
                 let t1 = (-b + sqrt(det)) / (2 * a);
                 let t2 = (-b - sqrt(det)) / (2 * a);
                 return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
@@ -217,168 +231,194 @@ function mousePressed() {
         ellipse(this.position.x, this.position.y, this.radius * 2);
     }
 }
-      
-        class Stream {
-            constructor(color) {
+
+class Stream {
+    constructor(color) {
+        this.justBounced = false;
+        this.color = color;
+        this.points = [];
+        this.noiseOffset = hl.randomInt(1000);
+        this.currentAngle = hl.random(TWO_PI);
+        this.initStream();
+        this.randomMovement = true;
+    }
+
+    // initStream() {
+    //     let startX, startY;
+    //     do {
+    //         startX = hl.random(width * .05, width * .95);
+    //         startY = hl.random(height * .05, height * .95);
+    //     } while (!this.isInsideAnyMainShape(createVector(startX, startY)));
+
+    //     this.points.push(createVector(startX, startY));
+    // }
+
+    // Initialize stream position at the center of a random main shape
+    initStream() {
+        // Pick a random main shape
+        let shape = hl.randomElement(mainShapes);
+        let startX, startY;
+
+        if (shape.type === 'circle' || shape.type === 'square') {
+            // Center of the shape
+            startX = shape.position.x;
+            startY = shape.position.y;
+        } else if (shape.type === 'triangle') {
+            // Approximate center of the triangle
+            let x1 = shape.position.x, y1 = shape.position.y - shape.radius / sqrt(3);
+            let x2 = shape.position.x - shape.radius / 2, y2 = shape.position.y + shape.radius / (2 * sqrt(3));
+            let x3 = shape.position.x + shape.radius / 2, y3 = y2;
+            startX = (x1 + x2 + x3) / 3;
+            startY = (y1 + y2 + y3) / 3;
+        }
+
+        this.points.push(createVector(startX, startY));
+    }
+    
+    update() {
+        let lastPoint = this.points[this.points.length - 1];
+
+        // if (this.insideMainShape) {
+        //     let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 2, PI / 2);
+        //     this.currentAngle += angleVariation;
+        // } else if (this.randomMovement) {
+        //     let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 2, PI / 2);
+        //     this.currentAngle += angleVariation;
+        if (this.insideMainShape || this.randomMovement) {
+            let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
+            this.currentAngle += angleVariation;
+        } else {
+            this.currentAngle = this.angleToMainShapeBorder(lastPoint);
+        }
+
+        if (this.justBounced) {
+            this.framesAfterBounce = (this.framesAfterBounce || 0) + 1;
+            if (this.framesAfterBounce > 5) {
                 this.justBounced = false;
-                this.color = color;
-                this.points = [];
-                this.noiseOffset = hl.randomInt(1000);
-                this.currentAngle = hl.random(TWO_PI);
-                this.initStream();
-                this.randomMovement = true;
+                this.framesAfterBounce = 0;
             }
-
-initStream() {
-    let startX, startY;
-    do {
-        startX = hl.random(width);
-        startY = hl.random(height);
-    } while (!this.isInsideShape(createVector(startX, startY))); // changed this condition
-
-    this.points.push(createVector(startX, startY));
-}
-
-            update() {
-                let lastPoint = this.points[this.points.length - 1];
-
-    if (this.insideCircle) {
-        // Random movement inside the circle
-        let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
-        this.currentAngle += angleVariation;
-    } else if (this.randomMovement) {
-        // Scatter movement
-        let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
-        this.currentAngle += angleVariation;
-    } else {
-        // Magnetized movement towards the circle
-        this.currentAngle = this.angleToCircleBorder(lastPoint);
-    }
-
-    if (this.justBounced) {
-        // Disable noise influence for some frames after bouncing
-        // You can adjust the number of frames as needed
-        this.framesAfterBounce = (this.framesAfterBounce || 0) + 1;
-        if (this.framesAfterBounce > 5) {  // Example: 10 frames
-            this.justBounced = false;
-            this.framesAfterBounce = 0;
+        } else {
+            this.noiseOffset += 0.05;
         }
-    } else {
-        this.noiseOffset += 0.05;  // Update noise offset if not recently bounced
-    }
-              
 
-    let len = 5;
-    let newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+        let len = 5;
+        let newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
 
-              
-              
-    if (this.isInsideShape(newPoint) && !this.insideCircle && this.randomMovement) {
-        // If the stream is about to enter the circle and is not allowed to, bounce it away
-        let angleToCenter = this.angleToCircleBorder(newPoint);
-        this.currentAngle = 2 * angleToCenter - PI - this.currentAngle;
-        newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
-        this.justBounced = true;
-    }
-
-    if (this.isInsideShape(newPoint)) {
-        this.insideCircle = true;
-    } else {
-        this.insideCircle = false;
-    }
-if (!this.isInsideShape(newPoint)) {
-    for (let obstacle of obstacles) {
-        let distance = dist(lastPoint.x, lastPoint.y, obstacle.position.x, obstacle.position.y);
-        if (distance < obstacle.radius) {
-            // Repulsion effect
-            let angleToObstacle = atan2(obstacle.position.x - lastPoint.x, obstacle.position.y - lastPoint.y);
-            let deviationAngle = this.currentAngle - angleToObstacle;
-
-            if (abs(deviationAngle) < PI / 2) {
-                this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
-            } else {
-                this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
-            }
-
-            // Update newPoint after obstacle interaction
+        if (this.isInsideAnyMainShape(newPoint) && !this.insideMainShape && this.randomMovement) {
+            let angleToCenter = this.angleToMainShapeBorder(newPoint);
+            this.currentAngle = 2 * angleToCenter - PI - this.currentAngle;
             newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
-
+            this.justBounced = true;
         }
-    }
-}
 
-          
-                // Bounce off the canvas boundaries
-                if (newPoint.x <= width * (1/20) || newPoint.x >= width * (19/20)) {
-                    this.currentAngle = PI - this.currentAngle;
-                    this.justBounced = true;
-                }
-                if (newPoint.y <= height * (1/20) || newPoint.y >= height * (19/20)) {
-                    this.currentAngle = - this.currentAngle;
-                    this.justBounced = true;
-                }
-              
-                newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+        if (this.isInsideAnyMainShape(newPoint)) {
+            this.insideMainShape = true;
+        } else {
+            this.insideMainShape = false;
+        }
 
-                // Check again if new point is outside the boundary, and adjust if necessary
-                if (newPoint.x <= width * (1/20) || newPoint.x >= width * (19/20) || newPoint.y <= height * (1/20) || newPoint.y >= height * (19/20)) {
+        if (!this.isInsideAnyMainShape(newPoint)) {
+            for (let obstacle of obstacles) {
+                let distance = dist(lastPoint.x, lastPoint.y, obstacle.position.x, obstacle.position.y);
+                if (distance < obstacle.radius) {
+                    let angleToObstacle = atan2(obstacle.position.x - lastPoint.x, obstacle.position.y - lastPoint.y);
+                    let deviationAngle = this.currentAngle - angleToObstacle;
+
+                    if (abs(deviationAngle) < PI / 2) {
+                        this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+                    } else {
+                        this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+                    }
+
                     newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
                 }
-
-                this.points.push(newPoint);
-                if (this.justBounced) {
-
-                } else {
-                this.noiseOffset += 0.05;
-                }
-
-                if (this.points.length > 100) {
-                    this.points.shift();
-                }
-            }
-          
-            angleToCircleBorder(point) {
-                return atan2(height / 2 - point.y, width / 2 - point.x);
-            }
-          
-            changeMovement(randomMovement) {
-                this.randomMovement = randomMovement;
-                if (randomMovement) {
-                    this.insideCircle = false; // Ensure stream is set as outside the circle
-                }
-            }
-          
-            isInsideShape(point) {
-                if (shapeType === 'circle') {
-                    return dist(point.x, point.y, width / 2, height / 2) < circleRadius;
-                } else if (shapeType === 'square') {
-                    // Can rename variable later, but let's say that `circleRadius` is the side length of the square
-                    return point.x > width / 2 - circleRadius / 2 && point.x < width / 2 + circleRadius / 2 && point.y > height / 2 - circleRadius / 2 && point.y < height / 2 + circleRadius / 2;
-                } else if (shapeType === 'triangle') {
-                    // Can rename variable later, but `circleRadius` is the side length of the triangle
-                    // See if point is within the triangle
-                    let x1 = width / 2 - circleRadius / 2;
-                    let y1 = height / 2 + circleRadius / 2;
-                    let x2 = width / 2 + circleRadius / 2;
-                    let y2 = height / 2 + circleRadius / 2;
-                    let x3 = width / 2;
-                    let y3 = height / 2 - circleRadius / 2;
-                    let denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-                    let a = ((y2 - y3) * (point.x - x3) + (x3 - x2) * (point.y - y3)) / denominator;
-                    let b = ((y3 - y1) * (point.x - x3) + (x1 - x3) * (point.y - y3)) / denominator;
-                    let c = 1 - a - b;
-                    return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
-                }
-            }
-
-            display() {
-                noFill();
-                stroke(this.color);
-                strokeWeight(1);
-                beginShape();
-                for (let pt of this.points) {
-                    vertex(pt.x, pt.y);
-                }
-                endShape();
             }
         }
+
+        if (newPoint.x <= width * (1 / 20) || newPoint.x >= width * (19 / 20)) {
+            this.currentAngle = PI - this.currentAngle;
+            this.justBounced = true;
+        }
+
+        if (newPoint.y <= height * (1 / 20) || newPoint.y >= height * (19 / 20)) {
+            this.currentAngle = -this.currentAngle;
+            this.justBounced = true;
+        }
+
+        newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+
+        if (newPoint.x <= width * (1 / 20) || newPoint.x >= width * (19 / 20) || newPoint.y <= height * (1 / 20) || newPoint.y >= height * (19 / 20)) {
+            newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+        }
+
+        this.points.push(newPoint);
+        if (this.justBounced) {
+        } else {
+            this.noiseOffset += 0.05;
+        }
+
+        if (this.points.length > 100) {
+            this.points.shift();
+        }
+    }
+
+    angleToMainShapeBorder(point) {
+        let closestAngle = 0;
+        let closestDistance = Infinity;
+        for (let shape of mainShapes) {
+            let angleToCenter = atan2(shape.position.y - point.y, shape.position.x - point.x);
+            let distance = dist(point.x, point.y, shape.position.x, shape.position.y);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestAngle = angleToCenter;
+            }
+        }
+        return closestAngle;
+    }
+
+    changeMovement(randomMovement) {
+        this.randomMovement = randomMovement;
+        if (randomMovement) {
+            this.insideMainShape = false;
+        }
+    }
+
+    isInsideAnyMainShape(point) {
+        for (let shape of mainShapes) {
+            if (shape.type === 'circle') {
+                if (dist(point.x, point.y, shape.position.x, shape.position.y) < shape.radius) {
+                    return true;
+                }
+            } else if (shape.type === 'square') {
+                if (point.x > shape.position.x - shape.radius / 2 && point.x < shape.position.x + shape.radius / 2 &&
+                    point.y > shape.position.y - shape.radius / 2 && point.y < shape.position.y + shape.radius / 2) {
+                    return true;
+                }
+            } else if (shape.type === 'triangle') {
+                let x1 = shape.position.x - shape.radius / 2;
+                let y1 = shape.position.y + shape.radius / 2;
+                let x2 = shape.position.x + shape.radius / 2;
+                let y2 = shape.position.y + shape.radius / 2;
+                let x3 = shape.position.x;
+                let y3 = shape.position.y - shape.radius / 2;
+                let denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+                let a = ((y2 - y3) * (point.x - x3) + (x3 - x2) * (point.y - y3)) / denominator;
+                let b = ((y3 - y1) * (point.x - x3) + (x1 - x3) * (point.y - y3)) / denominator;
+                let c = 1 - a - b;
+                return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
+            }
+        }
+        return false;
+    }
+
+    display() {
+        noFill();
+        stroke(this.color);
+        strokeWeight(1);
+        beginShape();
+        for (let pt of this.points) {
+            vertex(pt.x, pt.y);
+        }
+        endShape();
+    }
+}
