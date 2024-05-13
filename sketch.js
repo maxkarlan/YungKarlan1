@@ -11,10 +11,10 @@ const numOfMainShapes = 3;  // Adjust the number of main shapes you want
 function setup() {
     let canvasSize = min(windowWidth, windowHeight);
     createCanvas(canvasSize, canvasSize);
-    circleRadiusOptions = [3, 6, 12];
+    circleRadiusOptions = [3, 6, 9, 12];
 
     let shapeTypeOptions = ['circle', 'square', 'triangle'];
-    let densityStreams = [150, 450, 750];
+    let densityStreams = [300, 750, 1200];
     let numOfStreams = hl.randomElement(densityStreams);
     console.log("density:", numOfStreams);
 
@@ -22,6 +22,9 @@ function setup() {
     let selectedFunction = hl.randomElement(colorGroupFunctions);
     bgWhite = hl.randomBool(0.5);
     console.log("color:", selectedFunction);
+
+    // Generate a random number of main shapes between 1 and 6
+    let numOfMainShapes = hl.randomInt(1, 7);
 
     for (let i = 0; i < numOfMainShapes; i++) {
         let shapeType = hl.randomElement(shapeTypeOptions);
@@ -100,7 +103,7 @@ function draw() {
     // Draw the main shapes
     for (let shape of mainShapes) {
         noFill();
-        stroke(125, 125, 125);
+        noStroke();
         if (shape.type === 'circle') {
             ellipse(shape.position.x, shape.position.y, 2 * shape.radius);
         } else if (shape.type === 'square') {
