@@ -243,28 +243,14 @@ class Stream {
         this.randomMovement = true;
     }
 
-    // initStream() {
-    //     let startX, startY;
-    //     do {
-    //         startX = hl.random(width * .05, width * .95);
-    //         startY = hl.random(height * .05, height * .95);
-    //     } while (!this.isInsideAnyMainShape(createVector(startX, startY)));
-
-    //     this.points.push(createVector(startX, startY));
-    // }
-
-    // Initialize stream position at the center of a random main shape
     initStream() {
-        // Pick a random main shape
         let shape = hl.randomElement(mainShapes);
         let startX, startY;
 
         if (shape.type === 'circle' || shape.type === 'square') {
-            // Center of the shape
             startX = shape.position.x;
             startY = shape.position.y;
         } else if (shape.type === 'triangle') {
-            // Approximate center of the triangle
             let x1 = shape.position.x, y1 = shape.position.y - shape.radius / sqrt(3);
             let x2 = shape.position.x - shape.radius / 2, y2 = shape.position.y + shape.radius / (2 * sqrt(3));
             let x3 = shape.position.x + shape.radius / 2, y3 = y2;
@@ -278,12 +264,6 @@ class Stream {
     update() {
         let lastPoint = this.points[this.points.length - 1];
 
-        // if (this.insideMainShape) {
-        //     let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 2, PI / 2);
-        //     this.currentAngle += angleVariation;
-        // } else if (this.randomMovement) {
-        //     let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 2, PI / 2);
-        //     this.currentAngle += angleVariation;
         if (this.insideMainShape || this.randomMovement) {
             let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
             this.currentAngle += angleVariation;
@@ -317,21 +297,19 @@ class Stream {
             this.insideMainShape = false;
         }
 
-        if (!this.isInsideAnyMainShape(newPoint)) {
-            for (let obstacle of obstacles) {
-                let distance = dist(lastPoint.x, lastPoint.y, obstacle.position.x, obstacle.position.y);
-                if (distance < obstacle.radius) {
-                    let angleToObstacle = atan2(obstacle.position.x - lastPoint.x, obstacle.position.y - lastPoint.y);
-                    let deviationAngle = this.currentAngle - angleToObstacle;
+        for (let obstacle of obstacles) {
+            let distance = dist(lastPoint.x, lastPoint.y, obstacle.position.x, obstacle.position.y);
+            if (distance < obstacle.radius) {
+                let angleToObstacle = atan2(obstacle.position.x - lastPoint.x, obstacle.position.y - lastPoint.y);
+                let deviationAngle = this.currentAngle - angleToObstacle;
 
-                    if (abs(deviationAngle) < PI / 2) {
-                        this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
-                    } else {
-                        this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
-                    }
-
-                    newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
+                if (abs(deviationAngle) < PI / 2) {
+                    this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+                } else {
+                    this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
                 }
+
+                newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
             }
         }
 
@@ -346,10 +324,6 @@ class Stream {
         }
 
         newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
-
-        if (newPoint.x <= width * (1 / 20) || newPoint.x >= width * (19 / 20) || newPoint.y <= height * (1 / 20) || newPoint.y >= height * (19 / 20)) {
-            newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
-        }
 
         this.points.push(newPoint);
         if (this.justBounced) {
@@ -385,30 +359,49 @@ class Stream {
 
     isInsideAnyMainShape(point) {
         for (let shape of mainShapes) {
-            if (shape.type === 'circle') {
-                if (dist(point.x, point.y, shape.position.x, shape.position.y) < shape.radius) {
-                    return true;
-                }
-            } else if (shape.type === 'square') {
-                if (point.x > shape.position.x - shape.radius / 2 && point.x < shape.position.x + shape.radius / 2 &&
-                    point.y > shape.position.y - shape.radius / 2 && point.y < shape.position.y + shape.radius / 2) {
-                    return true;
-                }
-            } else if (shape.type === 'triangle') {
-                let x1 = shape.position.x - shape.radius / 2;
-                let y1 = shape.position.y + shape.radius / 2;
-                let x2 = shape.position.x + shape.radius / 2;
-                let y2 = shape.position.y + shape.radius / 2;
-                let x3 = shape.position.x;
-                let y3 = shape.position.y - shape.radius / 2;
-                let denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-                let a = ((y2 - y3) * (point.x - x3) + (x3 - x2) * (point.y - y3)) / denominator;
-                let b = ((y3 - y1) * (point.x - x3) + (x1 - x3) * (point.y - y3)) / denominator;
-                let c = 1 - a - b;
-                return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
+            if (this.isPointInsideShape(point, shape)) {
+                return true;
             }
         }
         return false;
+    }
+
+    isPointInsideShape(point, shape) {
+        if (shape.type === 'circle') {
+            return dist(point.x, point.y, shape.position.x, shape.position.y) < shape.radius;
+        } else if (shape.type === 'square') {
+            return point.x > shape.position.x - shape.radius / 2 &&
+                   point.x < shape.position.x + shape.radius / 2 &&
+                   point.y > shape.position.y - shape.radius / 2 &&
+                   point.y < shape.position.y + shape.radius / 2;
+        } else if (shape.type === 'triangle') {
+            let x1 = shape.position.x - shape.radius / 2;
+            let y1 = shape.position.y + shape.radius / 2;
+            let x2 = shape.position.x + shape.radius / 2;
+            let y2 = shape.position.y + shape.radius / 2;
+            let x3 = shape.position.x;
+            let y3 = shape.position.y - shape.radius / 2;
+            return this.pointInTriangle(point.x, point.y, x1, y1, x2, y2, x3, y3);
+        }
+        return false;
+    }
+
+    pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+        let v0 = [cx - ax, cy - ay];
+        let v1 = [bx - ax, by - ay];
+        let v2 = [px - ax, py - ay];
+
+        let dot00 = v0[0] * v0[0] + v0[1] * v0[1];
+        let dot01 = v0[0] * v1[0] + v0[1] * v1[1];
+        let dot02 = v0[0] * v2[0] + v0[1] * v2[1];
+        let dot11 = v1[0] * v1[0] + v1[1] * v1[1];
+        let dot12 = v1[0] * v2[0] + v1[1] * v2[1];
+
+        let invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+        let u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        let v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+        return (u >= 0) && (v >= 0) && (u + v < 1);
     }
 
     display() {
@@ -422,3 +415,6 @@ class Stream {
         endShape();
     }
 }
+
+
+
