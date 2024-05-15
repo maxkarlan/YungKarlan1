@@ -4,27 +4,50 @@ let mainShapes = [];
 let randomMovement = true;
 let obstacles = [];
 let pressCount = 0;
+let elemStyle;
 let bgWhite;
+let dynamOpacity;
+let dynamThickness;
+let speed;
 const numOfObstacles = 20;  // Or any other number you like
 const numOfMainShapes = 3;  // Adjust the number of main shapes you want
 
 function setup() {
     let canvasSize = min(windowWidth, windowHeight);
     createCanvas(canvasSize, canvasSize);
-    circleRadiusOptions = [3, 6, 9, 12];
+    let elemStyleOptions = ["worms", "macaronis", "balls"];
+    elemStyle = hl.randomElement(elemStyleOptions);
+
+    if (elemStyle != "worms") {
+        dynamOpacity = hl.randomBool(.5);
+        dynamThickness = hl.randomBool(.5);
+    }
+
+    circleRadiusOptions = [5, 7.5, 12];
 
     let shapeTypeOptions = ['circle', 'square', 'triangle'];
-    let densityStreams = [300, 750, 1200];
-    let numOfStreams = hl.randomElement(densityStreams);
+    let densityOptions = [3, 7, 13];
+    let density = hl.randomElement(densityOptions);
+    console.log("density:", density);
+
+    if (elemStyle === "worms") {
+        numOfStreams = 50 * density;
+    } else if (dynamThickness) {
+        numOfStreams = 125 * density;
+    } else if (!dynamThickness) {
+        numOfStreams = 150 * density;
+    }
+
     console.log("density:", numOfStreams);
 
     let colorGroupFunctions = [redGroup, blueGroup, greenGroup, whiteGroup, purpleGroup, peachGroup, cottonCandyGroup, morningStarGroup];
     let selectedFunction = hl.randomElement(colorGroupFunctions);
-    bgWhite = hl.randomBool(0.5);
+    bgWhite = hl.randomBool(.5);
     console.log("color:", selectedFunction);
 
     // Generate a random number of main shapes between 1 and 6
-    let numOfMainShapes = hl.randomInt(1, 7);
+    let numOfMainShapes = hl.randomInt(7);
+    // let numOfMainShapes = 10;
 
     for (let i = 0; i < numOfMainShapes; i++) {
         let shapeType = hl.randomElement(shapeTypeOptions);
@@ -152,80 +175,50 @@ class Obstacle {
 
     overlapsWithMainShape() {
         for (let shape of mainShapes) {
-            if (shape.type === 'circle') {
-                if (dist(this.position.x, this.position.y, shape.position.x, shape.position.y) < (shape.radius + this.radius)) {
-                    return true;
-                }
-            } else if (shape.type === 'square') {
-                if (this.position.x > shape.position.x - (shape.radius / 2) - this.radius && this.position.x < shape.position.x + (shape.radius / 2) + this.radius &&
-                    this.position.y > shape.position.y - (shape.radius / 2) - this.radius && this.position.y < shape.position.y + (shape.radius / 2) + this.radius) {
-                    return true;
-                }
-            } else {
-                let x1 = shape.position.x, y1 = shape.position.y - shape.radius / sqrt(3);
-                let x2 = shape.position.x - shape.radius / 2, y2 = shape.position.y + shape.radius / (2 * sqrt(3));
-                let x3 = shape.position.x + shape.radius / 2, y3 = y2;
-
-                if (pointInTriangle(this.position.x, this.position.y, x1, y1, x2, y2, x3, y3)) {
-                    return true;
-                }
-
-                if (dist(this.position.x, this.position.y, x1, y1) < this.radius ||
-                    dist(this.position.x, this.position.y, x2, y2) < this.radius ||
-                    dist(this.position.x, this.position.y, x3, y3) < this.radius) {
-                    return true;
-                }
-
-                if (circleLineIntersect(this.position.x, this.position.y, this.radius, x1, y1, x2, y2) ||
-                    circleLineIntersect(this.position.x, this.position.y, this.radius, x2, y2, x3, y3) ||
-                    circleLineIntersect(this.position.x, this.position.y, this.radius, x3, y3, x1, y1)) {
-                    return true;
-                }
+            if (this.isOverlapping(shape)) {
+                return true;
             }
         }
-
         return false;
+    }
 
-        function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
-            let v0 = [cx - ax, cy - ay];
-            let v1 = [bx - ax, by - ay];
-            let v2 = [px - ax, py - ay];
-
-            let dot00 = v0[0] * v0[0] + v0[1] * v0[1];
-            let dot01 = v0[0] * v1[0] + v0[1] * v1[1];
-            let dot02 = v0[0] * v2[0] + v0[1] * v2[1];
-            let dot11 = v1[0] * v1[0] + v1[1] * v1[1];
-            let dot12 = v1[0] * v2[0] + v1[1] * v2[1];
-
-            let invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-            let u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-            let v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-            return (u >= 0) && (v >= 0) && (u + v < 1);
+    isOverlapping(shape) {
+        let distance = dist(this.position.x, this.position.y, shape.position.x, shape.position.y);
+        if (shape.type === 'circle') {
+            return distance < (shape.radius + this.radius);
+        } else if (shape.type === 'square') {
+            let halfSize = shape.radius / 2;
+            return this.position.x > shape.position.x - halfSize - this.radius &&
+                   this.position.x < shape.position.x + halfSize + this.radius &&
+                   this.position.y > shape.position.y - halfSize - this.radius &&
+                   this.position.y < shape.position.y + halfSize + this.radius;
+        } else if (shape.type === 'triangle') {
+            return this.pointInTriangle(this.position, shape);
         }
+        return false;
+    }
 
-        function circleLineIntersect(x0, y0, radius, x1, y1, x2, y2) {
-            let dx = x2 - x1;
-            let dy = y2 - y1;
-            let a = dx * dx + dy * dy;
-            let b = 2 * (dx * (x1 - x0) + dy * (y1 - y0));
-            let c = x1 * x1 + y1 * y1;
-            c += x0 * x0 + y0 * y0;
-            c -= 2 * (x1 * x0 + y1 * y0);
-            c -= radius * radius;
-            let det = b * b - 4 * a * c;
+    pointInTriangle(point, shape) {
+        let {x, y} = point;
+        let x1 = shape.position.x - shape.radius / 2, y1 = shape.position.y + shape.radius / 2;
+        let x2 = shape.position.x + shape.radius / 2, y2 = shape.position.y + shape.radius / 2;
+        let x3 = shape.position.x, y3 = shape.position.y - shape.radius / 2;
 
-            if (a <= 0.0000001 || det < 0) {
-                return false;
-            } else if (det === 0) {
-                let t = -b / (2 * a);
-                return t >= 0 && t <= 1;
-            } else {
-                let t1 = (-b + sqrt(det)) / (2 * a);
-                let t2 = (-b - sqrt(det)) / (2 * a);
-                return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
-            }
-        }
+        let v0 = [x3 - x1, y3 - y1];
+        let v1 = [x2 - x1, y2 - y1];
+        let v2 = [x - x1, y - y1];
+
+        let dot00 = v0[0] * v0[0] + v0[1] * v0[1];
+        let dot01 = v0[0] * v1[0] + v0[1] * v1[1];
+        let dot02 = v0[0] * v2[0] + v0[1] * v2[1];
+        let dot11 = v1[0] * v1[0] + v1[1] * v1[1];
+        let dot12 = v1[0] * v2[0] + v1[1] * v2[1];
+
+        let invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+        let u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        let v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+        return (u >= 0) && (v >= 0) && (u + v < 1);
     }
 
     display() {
@@ -235,6 +228,7 @@ class Obstacle {
     }
 }
 
+
 class Stream {
     constructor(color) {
         this.justBounced = false;
@@ -242,6 +236,7 @@ class Stream {
         this.points = [];
         this.noiseOffset = hl.randomInt(1000);
         this.currentAngle = hl.random(TWO_PI);
+        // this.streamThick = hl.randomInt(1, 5);
         this.initStream();
         this.randomMovement = true;
     }
@@ -265,10 +260,11 @@ class Stream {
     }
     
     update() {
+        let len;
         let lastPoint = this.points[this.points.length - 1];
 
         if (this.insideMainShape || this.randomMovement) {
-            let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 4, PI / 4);
+            let angleVariation = map(noise(this.noiseOffset), 0, 1, -PI / 6, PI / 6);
             this.currentAngle += angleVariation;
         } else {
             this.currentAngle = this.angleToMainShapeBorder(lastPoint);
@@ -281,10 +277,15 @@ class Stream {
                 this.framesAfterBounce = 0;
             }
         } else {
-            this.noiseOffset += 0.05;
+            this.noiseOffset += .1;
         }
 
-        let len = 5;
+        if (elemStyle === "worms") {
+            len = 6.5;
+        } else {
+            len = 3;
+        }
+
         let newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
 
         if (this.isInsideAnyMainShape(newPoint) && !this.insideMainShape && this.randomMovement) {
@@ -307,9 +308,9 @@ class Stream {
                 let deviationAngle = this.currentAngle - angleToObstacle;
 
                 if (abs(deviationAngle) < PI / 2) {
-                    this.currentAngle += map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+                    this.currentAngle += map(distance, 0, obstacle.radius, -PI / 6, PI / 6);
                 } else {
-                    this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 4, PI / 4);
+                    this.currentAngle -= map(distance, 0, obstacle.radius, -PI / 6, PI / 6);
                 }
 
                 newPoint = p5.Vector.fromAngle(this.currentAngle).mult(len).add(lastPoint);
@@ -333,9 +334,18 @@ class Stream {
         } else {
             this.noiseOffset += 0.05;
         }
-
-        if (this.points.length > 100) {
-            this.points.shift();
+        if (elemStyle === "worms") {
+            if (this.points.length > 100) {
+                this.points.shift();
+            }
+        } else if (elemStyle === "macaronis") {
+            if (this.points.length > 10) {
+                this.points.shift();
+            }
+        } else if (elemStyle === "balls") {
+            if (this.points.length > 2) {
+                this.points.shift();
+            }
         }
     }
 
@@ -409,10 +419,34 @@ class Stream {
 
     display() {
         noFill();
-        stroke(this.color);
-        strokeWeight(1);
         beginShape();
+        let normalizedDistance;
+        let opacity;
+        let thickness;
         for (let pt of this.points) {
+
+            if (dynamOpacity || dynamThickness) {
+                // Calculate the distance from the mouse position
+                let distanceFromMouse = dist(pt.x, pt.y, mouseX, mouseY);
+                // Map the distance from the mouse position to thickness and opacity, using an exponential function
+                let maxDistance = dist(0, 0, width, height);
+                normalizedDistance = sqrt(distanceFromMouse / maxDistance);
+            }
+            if (dynamOpacity) {
+                opacity = 255 * pow(0.25, normalizedDistance); // Exponential mapping for opacity
+            } else {
+                opacity = 255;
+            }
+            if (dynamThickness) {
+                thickness = .85 * pow(75, normalizedDistance); // Exponential mapping for thickness
+            } else if (elemStyle != "worms" && !dynamThickness){
+                thickness = 5;
+            } else {
+                thickness = 1;
+            }
+            
+            stroke(this.color.levels[0], this.color.levels[1], this.color.levels[2], opacity);
+            strokeWeight(thickness);
             vertex(pt.x, pt.y);
         }
         endShape();
