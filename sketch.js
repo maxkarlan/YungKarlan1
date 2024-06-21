@@ -164,23 +164,24 @@ function draw() {
   }
 }
 
-function mousePressed() {
-  pressCount++;
+// Note to max - to get the input hash element working I had to comment this out. Not sure yet why...
+// function mousePressed() {
+//   pressCount++;
 
-  if (pressCount % 2 === 0) {
-    obstacles = []; // Clear existing obstacles
-    for (let i = 0; i < numOfObstacles; i++) {
-      obstacles.push(new Obstacle());
-    }
-  }
+//   if (pressCount % 2 === 0) {
+//     obstacles = []; // Clear existing obstacles
+//     for (let i = 0; i < numOfObstacles; i++) {
+//       obstacles.push(new Obstacle());
+//     }
+//   }
 
-  randomMovement = !randomMovement;
-  for (let s of streams) {
-    s.changeMovement(randomMovement);
-  }
+//   randomMovement = !randomMovement;
+//   for (let s of streams) {
+//     s.changeMovement(randomMovement);
+//   }
 
-  return false; // This prevents any default behavior
-}
+//   return false; // This prevents any default behavior
+// }
 
 class Obstacle {
   constructor() {

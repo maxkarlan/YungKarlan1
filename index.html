@@ -10,7 +10,6 @@
     <style>
         body {
             margin: 0;
-            overflow: hidden;
         }
 
         canvas {
@@ -19,9 +18,78 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        .input-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .input-container2 {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
         }
     </style>
+    <script>
+
+        function getQueryParam(param) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+                // Function to set the input value from query parameter on page load
+        function setInputFromQueryParam() {
+            var hValue = getQueryParam('h');
+            if (hValue) {
+                document.getElementById('hInput').value = hValue;
+            }
+            var wValue = getQueryParam('wa');
+            if (wValue) {
+                document.getElementById('wInput').value = wValue;
+            }
+        }
+
+        // Set input value from query parameter when the page loads
+        window.onload = setInputFromQueryParam;
+    </script>
 </head>
 <body>
+    <div class="input-container">
+        <input type="text" id="hInput" placeholder="Enter value for hash" value="">
+        <button onclick="updateH()">Update hash</button>
+    </div>
+    <div class="input-container2">
+        <input type="text" id="wInput" placeholder="Enter value for wallet" value="">
+        <button onclick="updateW()">Update wallet</button>
+    </div>
+    <script>
+        function updateH() {
+            const hValue = document.getElementById('hInput').value;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('h', hValue);
+            window.location.search = urlParams.toString();
+        }
+        function updateW() {
+            const hValue = document.getElementById('wInput').value;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('wa', hValue);
+            window.location.search = urlParams.toString();
+        }
+    </script>
 </body>
 </html>
