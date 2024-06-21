@@ -74,6 +74,7 @@ function setup() {
   }
 
   console.log("Traits: ", t);
+  window.traits = t;
 }
 
 function redGroup() {

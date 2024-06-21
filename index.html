@@ -35,6 +35,13 @@
             z-index: 10;
         }
 
+        .trait-table {
+            position: absolute;
+            top: 180px;
+            left: 20px;
+            z-index: 10;
+        }
+
         input {
             padding: 10px;
             font-size: 16px;
@@ -43,6 +50,23 @@
         button {
             padding: 10px;
             font-size: 16px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 20%;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
         }
     </style>
     <script>
@@ -65,7 +89,38 @@
         }
 
         // Set input value from query parameter when the page loads
-        window.onload = setInputFromQueryParam;
+        window.onload = () => {
+            setInputFromQueryParam();
+        
+
+            // Check every 1 second for window.traits to exist
+            var interval = setInterval(() => {
+                if (window.traits) {
+                    clearInterval(interval);
+                    // Get the table body element
+                    const tableBody = document.getElementById('traits-table-body');
+
+                    // Iterate over the traits object and create table rows
+                    for (const [key, value] of Object.entries(traits)) {
+                        if (key === 'selectedFunction') {
+                            continue;
+                        }
+
+                        const row = document.createElement('tr');
+                        const traitCell = document.createElement('td');
+                        const valueCell = document.createElement('td');
+
+                        traitCell.textContent = key;
+                        valueCell.textContent = value;
+
+                        row.appendChild(traitCell);
+                        row.appendChild(valueCell);
+                        tableBody.appendChild(row);
+                    }
+                }
+            }, 1000);
+
+        };
     </script>
 </head>
 <body>
@@ -77,6 +132,17 @@
         <input type="text" id="wInput" placeholder="Enter value for wallet" value="">
         <button onclick="updateW()">Update wallet</button>
     </div>
+    <table class="trait-table">
+        <thead>
+            <tr>
+                <th>Trait</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody id="traits-table-body">
+            <!-- Rows will be inserted here by JavaScript -->
+        </tbody>
+    </table>
     <script>
         function updateH() {
             const hValue = document.getElementById('hInput').value;
